@@ -9,7 +9,7 @@ import {
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent } from '../src/rum'
+import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent, PerformanceResourceTimingWithServerTiming } from '../src/rum'
 import { CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
@@ -93,7 +93,7 @@ describe('rum handle performance entry', () => {
       it(description, () => {
         handleResourceEntry(
           configuration as Configuration,
-          entry as PerformanceResourceTiming,
+          entry as PerformanceResourceTimingWithServerTiming,
           handler,
           new LifeCycle()
         )
@@ -137,11 +137,11 @@ describe('rum handle performance entry', () => {
       expected: string
     }) => {
       it(`should compute resource kind: ${description}`, () => {
-        const entry: Partial<PerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
+        const entry: Partial<PerformanceResourceTimingWithServerTiming> = { initiatorType, name: url, entryType: 'resource' }
 
         handleResourceEntry(
           configuration as Configuration,
-          entry as PerformanceResourceTiming,
+          entry as PerformanceResourceTimingWithServerTiming,
           handler,
           new LifeCycle()
         )
@@ -152,7 +152,7 @@ describe('rum handle performance entry', () => {
   )
 
   it('should compute timing durations', () => {
-    const entry: Partial<PerformanceResourceTiming> = {
+    const entry: Partial<PerformanceResourceTimingWithServerTiming> = {
       connectEnd: 10,
       connectStart: 3,
       domainLookupEnd: 3,
@@ -167,7 +167,7 @@ describe('rum handle performance entry', () => {
       secureConnectionStart: 0,
     }
 
-    handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+    handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTimingWithServerTiming, handler, new LifeCycle())
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
@@ -175,7 +175,7 @@ describe('rum handle performance entry', () => {
 
   describe('ignore invalid performance entry', () => {
     it('when it has a negative timing start', () => {
-      const entry: Partial<PerformanceResourceTiming> = {
+      const entry: Partial<PerformanceResourceTimingWithServerTiming> = {
         connectEnd: 10,
         connectStart: -3,
         domainLookupEnd: 10,
@@ -191,20 +191,20 @@ describe('rum handle performance entry', () => {
         secureConnectionStart: 0,
       }
 
-      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTimingWithServerTiming, handler, new LifeCycle())
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
 
     it('when it has timing start after its end', () => {
-      const entry: Partial<PerformanceResourceTiming> = {
+      const entry: Partial<PerformanceResourceTimingWithServerTiming> = {
         entryType: 'resource',
         name: 'http://localhost/test',
         responseEnd: 25,
         responseStart: 100,
       }
 
-      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTimingWithServerTiming, handler, new LifeCycle())
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })

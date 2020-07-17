@@ -9,11 +9,7 @@ import {
   ResourceKind,
 } from '@datadog/browser-core'
 
-import { PerformanceResourceDetails, PerformanceServerTiming } from './rum'
-
-interface PerformanceResourceTimingWithServerTiming extends PerformanceResourceTiming {
-  serverTiming: Array<PerformanceServerTiming>
- }
+import { PerformanceResourceDetails, PerformanceServerTiming, PerformanceResourceTimingWithServerTiming } from './rum'
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 
@@ -61,7 +57,7 @@ function areInOrder(...numbers: number[]) {
   return true
 }
 
-export function computePerformanceResourceDuration(entry: PerformanceResourceTiming): number {
+export function computePerformanceResourceDuration(entry: PerformanceResourceTimingWithServerTiming): number {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
@@ -73,9 +69,8 @@ export function computePerformanceResourceDuration(entry: PerformanceResourceTim
 }
 
 export function computePerformanceResourceDetails(
-  entry: PerformanceResourceTiming
+  entry: PerformanceResourceTimingWithServerTiming
 ): PerformanceResourceDetails | undefined {
-  let extendedEntry = (entry as PerformanceResourceTimingWithServerTiming)
   const {
     startTime,
     fetchStart,
@@ -88,7 +83,7 @@ export function computePerformanceResourceDetails(
     responseStart,
     responseEnd,
     serverTiming
-  } = extendedEntry
+  } = entry
   let { redirectStart, redirectEnd } = entry
 
   // Ensure timings are in the right order.  On top of filtering out potential invalid
@@ -155,13 +150,21 @@ export function computePerformanceResourceDetails(
   }
 
   // The only time fetchStart is different than startTime is if a redirection occured.
-  const hasServerTiming = serverTiming !== null
+  const hasServerTiming = serverTiming !== undefined
 
   if (hasServerTiming) {
-    details.serverTiming = serverTiming
+    details.serverTiming = serverTiming.map(formatServerTiming)
   }
 
   return details
+}
+
+function formatServerTiming(timing: PerformanceServerTiming) {
+  return {
+    name: timing.name,
+    duration: msToNs(timing.duration),
+    description: timing.description,
+  }
 }
 
 function formatTiming(origin: number, start: number, end: number) {

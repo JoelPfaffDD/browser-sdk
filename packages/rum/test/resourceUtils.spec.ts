@@ -4,9 +4,11 @@ import {
   computePerformanceResourceDuration,
   isValidResource,
 } from '../src/resourceUtils'
+import { PerformanceResourceTimingWithServerTiming } from '../src/rum'
+//import { PerformanceResourceTimingWithServerTiming } from '@datadog/browser-rum'
 
-function generateResourceWith(overrides: Partial<PerformanceResourceTiming>) {
-  const completeTiming: Partial<PerformanceResourceTiming> = {
+function generateResourceWith(overrides: Partial<PerformanceResourceTimingWithServerTiming>) {
+  const completeTiming: Partial<PerformanceResourceTimingWithServerTiming> = {
     connectEnd: 17,
     connectStart: 15,
     domainLookupEnd: 14,
@@ -24,7 +26,7 @@ function generateResourceWith(overrides: Partial<PerformanceResourceTiming>) {
     startTime: 10,
     ...overrides,
   }
-  return completeTiming as PerformanceResourceTiming
+  return completeTiming as PerformanceResourceTimingWithServerTiming
 }
 
 describe('computePerformanceResourceDetails', () => {

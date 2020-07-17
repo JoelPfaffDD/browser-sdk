@@ -59,10 +59,14 @@ interface PerformanceResourceDetailsElement {
 }
 
 export interface PerformanceServerTiming {
-  name: string
-  duration: number
-  description: string
+  readonly name: string
+  readonly duration: number
+  readonly description: string
 }
+
+export interface PerformanceResourceTimingWithServerTiming extends PerformanceResourceTiming {
+  serverTiming: Array<PerformanceServerTiming>
+ }
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement
@@ -436,7 +440,7 @@ function trackRequests(
     if (!isValidResource(request.url, configuration)) {
       return
     }
-    const timing = matchRequestTiming(request)
+    const timing = matchRequestTiming(request) as PerformanceResourceTimingWithServerTiming
     const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     const startTime = timing ? timing.startTime : request.startTime
     handler(startTime, {
@@ -471,7 +475,7 @@ function trackPerformanceTiming(
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     switch (entry.entryType) {
       case 'resource':
-        handleResourceEntry(configuration, entry as PerformanceResourceTiming, handler, lifeCycle)
+        handleResourceEntry(configuration, entry as PerformanceResourceTimingWithServerTiming, handler, lifeCycle)
         break
       case 'longtask':
         handleLongTaskEntry(entry as PerformanceLongTaskTiming, handler)
@@ -484,7 +488,7 @@ function trackPerformanceTiming(
 
 export function handleResourceEntry(
   configuration: Configuration,
-  entry: PerformanceResourceTiming,
+  entry: PerformanceResourceTimingWithServerTiming,
   handler: (startTime: number, event: RumResourceEvent) => void,
   lifeCycle: LifeCycle
 ) {
