@@ -58,6 +58,12 @@ interface PerformanceResourceDetailsElement {
   start: number
 }
 
+export interface PerformanceServerTiming {
+  name: string
+  duration: number
+  description: string
+}
+
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement
   dns?: PerformanceResourceDetailsElement
@@ -65,6 +71,7 @@ export interface PerformanceResourceDetails {
   ssl?: PerformanceResourceDetailsElement
   firstByte: PerformanceResourceDetailsElement
   download: PerformanceResourceDetailsElement
+  serverTiming?: Array<PerformanceServerTiming>
 }
 
 export interface RumResourceEvent {

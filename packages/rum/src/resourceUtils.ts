@@ -9,7 +9,11 @@ import {
   ResourceKind,
 } from '@datadog/browser-core'
 
-import { PerformanceResourceDetails } from './rum'
+import { PerformanceResourceDetails, PerformanceServerTiming } from './rum'
+
+interface PerformanceResourceTimingWithServerTiming extends PerformanceResourceTiming {
+  serverTiming: Array<PerformanceServerTiming>
+ }
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 
@@ -71,6 +75,7 @@ export function computePerformanceResourceDuration(entry: PerformanceResourceTim
 export function computePerformanceResourceDetails(
   entry: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
+  let extendedEntry = (entry as PerformanceResourceTimingWithServerTiming)
   const {
     startTime,
     fetchStart,
@@ -82,7 +87,8 @@ export function computePerformanceResourceDetails(
     requestStart,
     responseStart,
     responseEnd,
-  } = entry
+    serverTiming
+  } = extendedEntry
   let { redirectStart, redirectEnd } = entry
 
   // Ensure timings are in the right order.  On top of filtering out potential invalid
@@ -146,6 +152,13 @@ export function computePerformanceResourceDetails(
 
   if (hasRedirectionOccured) {
     details.redirect = formatTiming(startTime, redirectStart, redirectEnd)
+  }
+
+  // The only time fetchStart is different than startTime is if a redirection occured.
+  const hasServerTiming = serverTiming !== null
+
+  if (hasServerTiming) {
+    details.serverTiming = serverTiming
   }
 
   return details
